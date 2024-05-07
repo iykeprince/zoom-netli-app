@@ -33,3 +33,5 @@ export function apiRequest(method: string, endpoint: string, token: string, data
         },
     }).then(({ data }) => Promise.resolve(data));
 }
+
+export const encodeBase64 = (data: string) => Buffer.from(data).toString('base64')

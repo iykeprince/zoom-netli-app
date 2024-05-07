@@ -1,12 +1,10 @@
-import axios from "axios";
-import { apiRequest, zoomApp } from "./zoom_app";
+import axios, { AxiosError } from "axios";
+import { apiRequest, encodeBase64, zoomApp } from "./zoom_app";
 import crypto from "crypto";
 import createError from "http-errors";
 
 export function tokenRequest(params: any, id = "", secret = "") {
-  const username = process.env.clientId as string;
-  const password = process.env.clientSecret as string;
-
+  const authToken = encodeBase64(`${id}:${secret}`);
   return axios
     .post(
       zoomApp.host + "/oauth/token",
@@ -16,10 +14,7 @@ export function tokenRequest(params: any, id = "", secret = "") {
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-        },
-        auth: {
-          username,
-          password,
+          Authorization: `Bearer ${authToken}`,
         },
       }
     )
@@ -35,7 +30,8 @@ const base64URL = (s: any) =>
     .replace(/=/g, "");
 
 // returns a random string of format fmt
-export const rand = (fmt: any, depth = 32) => crypto.randomBytes(depth).toString(fmt);
+export const rand = (fmt: any, depth = 32) =>
+  crypto.randomBytes(depth).toString(fmt);
 
 /**
  * Return the url, state and verifier for the Zoom App Install
@@ -77,13 +73,48 @@ export async function getToken(code: string, verifier: any) {
 
   if (!verifier || typeof verifier !== "string")
     throw createError(500, "code verifier code must be a valid string");
-
-  return tokenRequest({
+  const clientId = zoomApp.clientId;
+  const clientSecret = zoomApp.clientSecret;
+  const authToken = encodeBase64(
+    `sH_SoSfsTUVJNHQdWC9PA:hvzUQUEeOVPF63KYM3ZWzxnNaAhDVBKT`
+  );
+  console.log("clientId", clientId, clientSecret,  "Authorization", `Basic ${authToken}`,);
+  console.log("param", {
     code,
-    code_verifier: verifier,
-    redirect_uri: zoomApp.redirectUrl,
     grant_type: "authorization_code",
+    redirect_uri: zoomApp.redirectUrl,
+    code_verifier: verifier,
   });
+  try {
+    const response = await axios.post(
+      `https://zoom.us/oauth/token`,
+      {
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: zoomApp.redirectUrl,
+        code_verifier: verifier,
+      },
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${authToken}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.log("error", (error as AxiosError).response?.data);
+  }
+  // return tokenRequest(
+  //   {
+  //     code,
+  //     code_verifier: verifier,
+  //     redirect_uri: zoomApp.redirectUrl,
+  //     grant_type: "authorization_code",
+  //   },
+  //   clientId,
+  //   clientSecret
+  // );
 }
 
 /**
