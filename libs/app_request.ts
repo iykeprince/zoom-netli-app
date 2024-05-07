@@ -35,7 +35,7 @@ const base64URL = (s: any) =>
     .replace(/=/g, "");
 
 // returns a random string of format fmt
-const rand = (fmt: any, depth = 32) => crypto.randomBytes(depth).toString(fmt);
+export const rand = (fmt: any, depth = 32) => crypto.randomBytes(depth).toString(fmt);
 
 /**
  * Return the url, state and verifier for the Zoom App Install
