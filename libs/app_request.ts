@@ -90,12 +90,10 @@ export async function getToken(code: string, verifier: any) {
     const response = await axios.post(
       `https://zoom.us/oauth/token`,
       {
-        // code,
-        // grant_type: "client_credentials",
-        // redirect_uri: zoomApp.redirectUrl,
-        // code_verifier: verifier,
-        accountId: '3035353183',
-        grant_type: "account_credentials"
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: zoomApp.redirectUrl,
+        code_verifier: verifier,
       },
       {
         headers: {
